@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sensory Physiology Quiz</title>
+<style>
+  :root{
+    --ink:#1c1a17;
+    --paper:#f6f0e4;
+    --line:#d8cdb8;
+    --moss:#3f5b45;
+    --rust:#a8552f;
+    --gold:#c69a3a;
+    --muted:#7a705f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: Georgia, 'Iowan Old Style', serif;
+    display:flex;
+    justify-content:center;
+    padding:40px 16px;
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+  }
+  .eyebrow{
+    font-family: 'Courier New', monospace;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-size:12px;
+    color:var(--muted);
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .track{
+    height:3px;
+    background:var(--line);
+    border-radius:2px;
+    margin-bottom:28px;
+    overflow:hidden;
+  }
+  .fill{
+    height:100%;
+    background:var(--moss);
+    width:0%;
+    transition:width .35s ease;
+  }
+  h1{
+    font-size:15px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--rust);
+    margin:0 0 24px;
+    font-family: 'Courier New', monospace;
+  }
+  .question{
+    font-size:22px;
+    line-height:1.4;
+    margin:0 0 28px;
+    min-height:90px;
+  }
+  .opt{
+    display:block;
+    width:100%;
+    text-align:left;
+    padding:14px 18px;
+    margin-bottom:10px;
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:2px;
+    font-family:inherit;
+    font-size:16px;
+    color:var(--ink);
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .opt:hover:not(:disabled){
+    border-color:var(--ink);
+  }
+  .opt.correct{
+    background:var(--moss);
+    border-color:var(--moss);
+    color:#fff;
+  }
+  .opt.wrong{
+    background:var(--rust);
+    border-color:var(--rust);
+    color:#fff;
+  }
+  .opt:disabled{cursor:default;}
+  .letter{
+    font-family:'Courier New', monospace;
+    color:var(--gold);
+    margin-right:10px;
+  }
+  .opt.correct .letter, .opt.wrong .letter{color:#fff;}
+  .foot{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:24px;
+    min-height:40px;
+  }
+  .verdict{
+    font-family:'Courier New', monospace;
+    font-size:13px;
+    letter-spacing:.05em;
+  }
+  .verdict.ok{color:var(--moss);}
+  .verdict.no{color:var(--rust);}
+  button.next{
+    font-family:'Courier New', monospace;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:13px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:12px 22px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  button.next:disabled{opacity:0; cursor:default;}
+  .final{
+    text-align:center;
+    padding:60px 0;
+  }
+  .final .score{
+    font-size:56px;
+    color:var(--rust);
+    font-family:'Courier New', monospace;
+    margin:10px 0;
+  }
+  .final p{color:var(--muted);}
+  .restart{
+    margin-top:20px;
+    font-family:'Courier New', monospace;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-size:13px;
+    background:transparent;
+    border:1px solid var(--ink);
+    padding:12px 22px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div class="card" id="app"></div>
+
+<script>
+const Q = [
+["Which structure provides most of the refractive power of the eye?",["Lens","Cornea","Retina","Iris"],1],
+["Which photoreceptor is responsible for night vision?",["Cones","Rods","Ganglion cells","Bipolar cells"],1],
+["The fovea contains mainly:",["Rods","Cones","Bipolar cells","Ganglion cells"],1],
+["During accommodation for near vision:",["Lens becomes flatter","Ciliary muscle relaxes","Lens becomes thicker","Pupil dilates only"],2],
+["Hyperpolarization of photoreceptors occurs because:",["Na+ channels open","cGMP increases","Na+ channels close","K+ channels close"],2],
+["Vitamin A deficiency causes:",["Cataract","Night blindness","Glaucoma","Astigmatism"],1],
+["Axons of ganglion cells form the:",["Retina","Lens","Optic nerve","Choroid"],2],
+["Crossing of nasal retinal fibers occurs in:",["Optic tract","Visual cortex","Optic chiasm","LGN"],2],
+["Primary visual cortex is located in:",["Temporal lobe","Occipital lobe","Frontal lobe","Parietal lobe"],1],
+["Myopia is corrected by:",["Convex lens","Concave lens","Cylindrical lens","Prism lens"],1],
+["Hyperopia is corrected by:",["Convex lens","Concave lens","Contact lens only","Prism"],0],
+["Astigmatism results from:",["Retinal damage","Uneven corneal curvature","Cataract","Optic nerve injury"],1],
+["Organ of Corti is located in:",["Middle ear","Cochlea","Vestibule","Tympanic membrane"],1],
+["The smallest ear ossicle is:",["Malleus","Incus","Stapes","Cochlea"],2],
+["Correct order of sound transmission:",["Stapes → Incus → Malleus","Malleus → Incus → Stapes","Incus → Cochlea → Malleus","Cochlea → Stapes"],1],
+["Eustachian tube connects middle ear to:",["Trachea","Nasopharynx","Cochlea","Orbit"],1],
+["Hair cells responsible for hearing are present in:",["Retina","Organ of Corti","Vestibule","Auditory cortex"],1],
+["Sensorineural deafness is due to damage of:",["Tympanic membrane","Cochlea or auditory nerve","Ear canal","Ossicles"],1],
+["Semicircular canals detect:",["Sound","Rotation","Taste","Smell"],1],
+["Utricle and saccule detect:",["Linear acceleration","Color","Sound frequency","Taste"],0],
+["Taste sensation is called:",["Vision","Gustation","Olfaction","Accommodation"],1],
+["Sweet taste receptors use:",["GPCR","Voltage-gated Na channels","Ca channels only","Cl channels"],0],
+["Smell sensation is called:",["Gustation","Olfaction","Vision","Hearing"],1],
+["Olfactory receptors are located in:",["Tongue","Nasal epithelium","Cochlea","Retina"],1],
+["Which cranial nerve carries vision?",["CN VIII","CN II","CN VII","CN X"],1],
+["Horizontal cells mainly function in:",["Hearing","Contrast enhancement","Accommodation","Smell"],1],
+["Cones are most concentrated in:",["Peripheral retina","Fovea","Optic disc","Choroid"],1],
+["Hearing pathway terminates in:",["Auditory cortex","Cerebellum","Retina","Medulla"],0],
+["Which receptor regenerates throughout life?",["Rods","Olfactory receptors","Ganglion cells","Hair cells"],1],
+["Which structure equalizes ear pressure?",["Cochlea","Eustachian tube","Retina","Vestibule"],1],
+["Which retinal cell produces action potentials?",["Bipolar cell","Horizontal cell","Ganglion cell","Rod cell"],2],
+["Which structure changes shape during accommodation?",["Cornea","Lens","Retina","Iris"],1],
+["Blind spot occurs because this area lacks:",["Cones","Rods and cones","Bipolar cells","Lens fibers"],1],
+["Rhodopsin is found in:",["Cones only","Rods","Ganglion cells","Optic nerve"],1],
+["Color vision deficiency usually involves dysfunction of:",["Rods","Cones","Bipolar cells","Horizontal cells"],1],
+["Pupillary constriction is controlled mainly by:",["Sympathetic system","Parasympathetic system","Somatic system","Vestibular system"],1],
+["The optic disc is also called:",["Macula","Blind spot","Fovea","Retina"],1],
+["Lateral geniculate nucleus belongs to:",["Cerebellum","Thalamus","Hypothalamus","Medulla"],1],
+["Increased intraocular pressure can cause:",["Cataract","Glaucoma","Myopia","Astigmatism"],1],
+["Cones function best in:",["Dim light","Bright light","Darkness","Sleep"],1],
+["The normal hearing receptor is:",["Retina","Organ of Corti","Vestibule","Eustachian tube"],1],
+["Vibrations enter inner ear through:",["Round window","Oval window","Tympanic cavity","Vestibule"],1],
+["Frequency of sound determines:",["Pitch","Loudness","Duration","Balance"],0],
+["Sound intensity determines:",["Pitch","Loudness","Smell","Taste"],1],
+["Cochlear fluid movement stimulates:",["Hair cells","Cornea","Retina","Cones"],0],
+["Conductive hearing loss may result from damage to:",["Auditory cortex","Ear ossicles","Hair cells","CN II"],1],
+["Which cranial nerve carries hearing signals?",["CN II","CN VII","CN VIII","CN X"],2],
+["The middle ear contains:",["Retina","Ear ossicles","Cochlea only","Lens"],1],
+["Balance information travels through:",["CN II","CN VIII","CN V","CN III"],1],
+["Semicircular canals detect:",["Linear acceleration","Angular acceleration","Taste","Sound frequency"],1],
+["Vertigo is commonly associated with dysfunction of:",["Retina","Vestibular apparatus","Cornea","Lens"],1],
+["Bitter taste mainly protects against:",["Cold","Toxic substances","Vision loss","Noise"],1],
+["Umami taste detects:",["Salt","Protein/amino acids","Acid","Sugar"],1],
+["Olfactory receptors are:",["Mechanoreceptors","Chemoreceptors","Thermoreceptors","Photoreceptors"],1],
+["Smell contributes strongly to:",["Hearing","Taste perception","Vision","Balance"],1],
+["Sweet receptors respond mainly to:",["Acids","Sugars","Salt","Heat"],1],
+["Olfactory receptor cells are:",["Unipolar","Bipolar neurons","Multipolar neurons","Astrocytes"],1],
+["Taste buds are mainly located on:",["Cornea","Tongue papillae","Retina","Cochlea"],1],
+["Which taste uses ion channels primarily?",["Sweet","Bitter","Salty","Umami"],2],
+["Loss of smell is called:",["Dysgeusia","Anosmia","Myopia","Tinnitus"],1],
+["Which layer of retina receives light first?",["Ganglion cell layer","Photoreceptor layer","Bipolar layer","Pigment layer"],0],
+["Hyperpolarization of photoreceptors causes:",["Increased glutamate release","Decreased glutamate release","Increased Na+ entry","Depolarization"],1],
+["Which photoreceptor pigment is present in cones?",["Rhodopsin","Photopsin","Melanin","Retinal only"],1],
+["Near vision requires:",["Lens flattening","Lens thickening","Pupil dilation only","Corneal flattening"],1],
+["Damage to optic chiasm causes:",["Monocular blindness","Bitemporal hemianopia","Tunnel vision","Total blindness"],1],
+["Visual information reaches cortex through:",["Basal ganglia","LGN","Hypothalamus","Cerebellum"],1],
+["The macula is responsible mainly for:",["Peripheral vision","Central vision","Balance","Hearing"],1],
+["Which cells increase contrast in retina?",["Horizontal cells","Ganglion cells","Rods","Cones"],0],
+["Which structure secretes aqueous humor?",["Retina","Ciliary body","Lens","Cornea"],1],
+["Cataract affects:",["Lens transparency","Retina","Optic nerve","Cornea only"],0],
+["Hearing receptors are stimulated by movement of:",["Tectorial membrane","Hair cells","Lens","Retina"],1],
+["The cochlea is responsible for:",["Vision","Hearing","Smell","Taste"],1],
+["Sound localization mainly depends on:",["One ear only","Comparison between both ears","Retina","Vestibule"],1],
+["High-frequency sounds stimulate:",["Apex of cochlea","Base of cochlea","Vestibule","Middle ear"],1],
+["Low-frequency sounds stimulate:",["Cochlear base","Cochlear apex","Organ of Corti only","Eustachian tube"],1],
+["Stapedius muscle function:",["Protects against loud sounds","Produces sound","Controls balance","Moves retina"],0],
+["Middle ear pressure is regulated by:",["Vestibule","Eustachian tube","Retina","Cochlea"],1],
+["Sensorineural deafness commonly results from damage to:",["Hair cells","Tympanic membrane","Ossicles","Ear canal"],0],
+["Semicircular canals contain:",["Endolymph","Blood","Tears","Aqueous humor"],0],
+["Hair cells of vestibular apparatus are embedded in:",["Cupula","Cornea","Retina","Lens"],0],
+["Utricle mainly detects:",["Horizontal acceleration","Sound","Vision","Smell"],0],
+["Saccule mainly detects:",["Vertical acceleration","Taste","Vision","Hearing"],0],
+["Taste buds are absent on:",["Tongue papillae","Filiform papillae","Fungiform papillae","Circumvallate papillae"],1],
+["Which cranial nerve carries taste from anterior 2/3 tongue?",["VII","IX","X","II"],0],
+["Taste from posterior 1/3 tongue travels through:",["CN VII","CN IX","CN VIII","CN III"],1],
+["Olfactory receptors regenerate approximately every:",["Few weeks","Never","Lifetime only once","Years"],0],
+["Olfactory cells are located in:",["Superior nasal cavity","Cochlea","Retina","Tongue"],0],
+["Loss of taste is called:",["Anosmia","Ageusia","Myopia","Hyperopia"],1],
+["Which taste sensation is most sensitive?",["Bitter","Sweet","Salty","Sour"],0],
+["Sweet receptors are activated through:",["GPCR","Stretch receptors","Voltage channels","Mechanoreceptors"],0],
+["CN II carries:",["Hearing","Vision","Taste","Balance"],1],
+["CN VIII carries:",["Hearing and balance","Taste only","Vision only","Smell only"],0],
+["Organ responsible for smell:",["Olfactory epithelium","Retina","Cochlea","Lens"],0],
+["Highest visual acuity occurs at:",["Optic disc","Fovea","Peripheral retina","Cornea"],1],
+["Night blindness occurs due to deficiency of:",["Vitamin D","Vitamin A","Vitamin C","Vitamin K"],1],
+["Vision in dim light mainly depends on:",["Cones","Rods","Bipolar cells","Ganglion cells"],1],
+["Sound energy is converted to electrical energy by:",["Hair cells","Retina","Lens","Iris"],0],
+["Accommodation improves:",["Near vision","Hearing","Taste","Smell"],0],
+["Primary auditory cortex is located in:",["Temporal lobe","Frontal lobe","Occipital lobe","Cerebellum"],0],
+["Primary visual cortex is located in:",["Occipital lobe","Temporal lobe","Frontal lobe","Parietal lobe"],0]
+];
+
+let idx = 0, score = 0, answered = false;
+const app = document.getElementById('app');
+const letters = ['A','B','C','D'];
+
+function render(){
+  if(idx >= Q.length){ renderFinal(); return; }
+  const [text, opts, correct] = Q[idx];
+  answered = false;
+  app.innerHTML = `
+    <div class="eyebrow"><span>QUESTION ${idx+1} / ${Q.length}</span><span>SCORE ${score}</span></div>
+    <div class="track"><div class="fill" style="width:${(idx/Q.length)*100}%"></div></div>
+    <h1>Sensory Physiology</h1>
+    <p class="question">${text}</p>
+    <div id="opts"></div>
+    <div class="foot">
+      <div class="verdict" id="verdict"></div>
+      <button class="next" id="nextBtn" disabled>Next →</button>
+    </div>
+  `;
+  const optsDiv = document.getElementById('opts');
+  opts.forEach((o,i)=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.innerHTML = `<span class="letter">${letters[i]}</span>${o}`;
+    b.onclick = () => selectOption(i, correct, b);
+    optsDiv.appendChild(b);
+  });
+}
+
+function selectOption(i, correct, btn){
+  if(answered) return;
+  answered = true;
+  const buttons = document.querySelectorAll('.opt');
+  buttons.forEach(b=>b.disabled=true);
+  const verdict = document.getElementById('verdict');
+  if(i === correct){
+    score++;
+    btn.classList.add('correct');
+    verdict.textContent = 'CORRECT';
+    verdict.className = 'verdict ok';
+  } else {
+    btn.classList.add('wrong');
+    buttons[correct].classList.add('correct');
+    verdict.textContent = 'WRONG';
+    verdict.className = 'verdict no';
+  }
+  document.getElementById('nextBtn').disabled = false;
+  document.querySelector('.fill').style.width = (((idx+1)/Q.length)*100)+'%';
+}
+
+function renderFinal(){
+  const pct = Math.round((score/Q.length)*100);
+  app.innerHTML = `
+    <div class="final">
+      <div class="eyebrow"><span>COMPLETE</span><span></span></div>
+      <p>You scored</p>
+      <div class="score">${score} / ${Q.length}</div>
+      <p>${pct}% correct</p>
+      <button class="restart" id="restartBtn">Restart Quiz</button>
+    </div>
+  `;
+  document.getElementById('restartBtn').onclick = ()=>{ idx=0; score=0; render(); };
+}
+
+document.addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'nextBtn' && !e.target.disabled){
+    idx++;
+    render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
