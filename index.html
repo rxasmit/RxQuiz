@@ -31,10 +31,11 @@ body{margin:0;background:#e9edf1;color:#1b1f23;font:16px/1.5 Arial,Helvetica,san
 button:focus-visible{outline:2px solid #d4a000}
 @media(max-width:640px){.nav{display:none}.main{padding:12px}}
 #usr{display:flex;align-items:center;gap:8px}#usr img{width:24px;height:24px;border-radius:50%}#usr[hidden],#login[hidden]{display:none}body.inq #un,body.inq #av{display:none}
-#login{position:fixed;inset:0;background:#e9edf1;display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}#login .card{margin:0;text-align:center;max-width:380px}#login .bt{background:#16365c;color:#fff;border-color:#16365c;padding:10px 20px}#lm{color:#a02218;font-size:14px}
+#login{position:fixed;inset:0;background:#e9edf1;display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}#login .card{margin:0;text-align:center;max-width:380px}#login .bt{background:#16365c;color:#fff;border-color:#16365c;padding:10px 20px}#lm{color:#a02218;font-size:14px}#lm.ok{color:#1e6b3f}#ef input{display:block;width:100%;font:inherit;padding:8px;margin:0 0 8px;border:1px solid #9aa7b4}#login .bt.g{background:#fff;color:#16365c;border-color:#9aa7b4}#ef a{color:#16365c;font-size:14px}
 </style></head><body>
 <div class="hd"><b id="h1">Clinical Focus Quizzes</b><span id="h2"></span><span class="r"><span id="tm"></span><button class="bt g" id="mk" hidden>Mark</button><button class="bt g" id="hm" hidden>All quizzes</button><span id="usr" hidden><img id="av" alt="" referrerpolicy="no-referrer"><span id="un"></span><button class="bt g" id="so">Sign out</button></span></span></div>
-<div id="login"><div class="card"><h2 style="margin-top:0">Clinical Focus Quizzes</h2><p>Sign in to continue.</p><p><button class="bt" id="lg" hidden>Sign in with Google</button></p><p><button class="bt g" id="sk" hidden style="color:#16365c;border-color:#9aa7b4">Continue without signing in</button></p><p id="lm"></p></div></div>
+<div id="login"><div class="card"><h2 style="margin-top:0">Clinical Focus Quizzes</h2><p>Sign in to continue.</p><p><button class="bt" id="lg" hidden>Sign in with Google</button></p>
+<div id="ef" hidden><p style="margin:10px 0 8px;color:#5a6b7c;font-size:14px">or use your email</p><input type="email" id="ei" placeholder="Email" autocomplete="email"><input type="password" id="pw" placeholder="Password" autocomplete="current-password"><p style="margin:0 0 10px"><button class="bt" id="si">Sign in</button> <button class="bt g" id="su">Create account</button></p><p style="margin:0 0 10px"><a href="#" id="fp">Forgot password?</a> &middot; <a href="#" id="ml">Email me a sign-in link</a></p></div><p><button class="bt g" id="sk" hidden style="color:#16365c;border-color:#9aa7b4">Continue without signing in</button></p><p id="lm"></p></div></div>
 <div class="wrap" id="app"></div>
 <div class="ft" id="ft"></div>
 <script>
@@ -607,7 +608,7 @@ const firebaseConfig={apiKey:"AIzaSyB0dyR2uJ9FPw-V8VN-WTDo7oaWyXN4ovs",authDomai
 /* Optional: only these Google accounts may enter, e.g. ["me@gmail.com"]. Empty list = any Google account. */
 const ALLOWED_EMAILS=[];
 /* ===== END SETTINGS ===== */
-const g=id=>document.getElementById(id),msg=t=>{g('lm').textContent=t};
+const g=id=>document.getElementById(id),msg=(t,ok)=>{g('lm').textContent=t;g('lm').className=ok?'ok':''};
 let started=false;
 const enter=()=>{g('login').hidden=true;if(!started){started=true;startQuiz()}};
 if(firebaseConfig.apiKey.startsWith('YOUR_')){
@@ -615,18 +616,30 @@ if(firebaseConfig.apiKey.startsWith('YOUR_')){
 }else try{
  const B='https://www.gstatic.com/firebasejs/10.14.1/';
  const {initializeApp}=await import(B+'firebase-app.js');
- const {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut}=await import(B+'firebase-auth.js');
+ const {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,onAuthStateChanged,signOut,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendPasswordResetEmail,sendEmailVerification,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink}=await import(B+'firebase-auth.js');
  const auth=getAuth(initializeApp(firebaseConfig)),prov=new GoogleAuthProvider();prov.setCustomParameters({prompt:'select_account'});
  g('lg').onclick=async()=>{msg('');try{await signInWithPopup(auth,prov)}catch(e){
   if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')return signInWithRedirect(auth,prov);
   if(e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request')msg(e.code==='auth/unauthorized-domain'?'This website address is not in Firebase "Authorized domains".':'Sign-in failed ('+(e.code||e.message)+').')}};
  g('so').onclick=()=>{if(hasProgress()&&!confirm('Sign out? Your progress in this block will be lost.'))return;signOut(auth)};
- onAuthStateChanged(auth,u=>{
-  if(u&&(!ALLOWED_EMAILS.length||ALLOWED_EMAILS.map(x=>x.toLowerCase()).includes((u.email||'').toLowerCase()))){
+ const val=()=>[g('ei').value.trim(),g('pw').value];
+ const ERR={'auth/invalid-credential':'Wrong email or password.','auth/invalid-email':'That email address is not valid.','auth/missing-password':'Enter your password.','auth/email-already-in-use':'An account with this email already exists. Try Sign in, or Forgot password.','auth/weak-password':'Password must be at least 6 characters.','auth/too-many-requests':'Too many attempts. Please wait a few minutes.','auth/unauthorized-continue-uri':'This website address is not in Firebase "Authorized domains".','auth/missing-email':'Enter your email first.'};
+ const fail=e=>msg(ERR[e.code]||'Something went wrong ('+(e.code||e.message)+').');
+ g('si').onclick=async()=>{msg('');const[e,p]=val();try{await signInWithEmailAndPassword(auth,e,p)}catch(x){fail(x)}};
+ g('su').onclick=async()=>{msg('');const[e,p]=val();try{await createUserWithEmailAndPassword(auth,e,p)}catch(x){fail(x)}};
+ g('fp').onclick=async ev=>{ev.preventDefault();msg('');const[e]=val();if(!e)return msg('Enter your email first.');try{await sendPasswordResetEmail(auth,e)}catch(x){if(x.code!=='auth/user-not-found')return fail(x)}msg('If an account exists for that email, a reset link has been sent (check spam).',true)};
+ g('ml').onclick=async ev=>{ev.preventDefault();msg('');const[e]=val();if(!e)return msg('Enter your email first.');try{await sendSignInLinkToEmail(auth,e,{url:location.origin+location.pathname,handleCodeInApp:true});try{localStorage.setItem('rxq_email',e)}catch(_){}msg('Sign-in link sent to '+e+'. Open it on this device (check spam).',true)}catch(x){fail(x)}};
+ g('pw').onkeydown=ev=>{if(ev.key==='Enter')g('si').click()};
+ const okEmail=u=>!ALLOWED_EMAILS.length||ALLOWED_EMAILS.map(x=>x.toLowerCase()).includes((u.email||'').toLowerCase());
+ onAuthStateChanged(auth,async u=>{
+  if(u&&!u.emailVerified){await sendEmailVerification(u).catch(()=>{});msg('Please verify your email: we sent a link to '+u.email+' (check spam). Then sign in again.',true);await signOut(auth);return}
+  if(u&&okEmail(u)){
    g('un').textContent=u.displayName||u.email||'';g('av').src=u.photoURL||'';g('av').hidden=!u.photoURL;g('usr').hidden=false;enter();
   }else{
-   if(u){msg('This Google account ('+u.email+') is not allowed.');signOut(auth)}
-   started=false;stopQuiz();g('usr').hidden=true;g('login').hidden=false;g('lg').hidden=false;
+   if(u){msg('This account ('+u.email+') is not allowed.');signOut(auth)}
+   started=false;stopQuiz();g('usr').hidden=true;g('login').hidden=false;g('lg').hidden=false;g('ef').hidden=false;
   }});
+ if(isSignInWithEmailLink(auth,location.href)){let e='';try{e=localStorage.getItem('rxq_email')||''}catch(_){}e=e||prompt('Confirm your email address to finish signing in');
+  if(e)try{await signInWithEmailLink(auth,e.trim(),location.href);try{localStorage.removeItem('rxq_email')}catch(_){}}catch(x){fail(x)}history.replaceState(null,'',location.pathname)}
 }catch(e){msg('Could not load Firebase. Check your internet connection, then reload.')}
 </script></body></html>
