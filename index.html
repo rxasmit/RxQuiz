@@ -35,7 +35,7 @@ button:focus-visible{outline:2px solid #d4a000}
 </style></head><body>
 <div class="hd"><b id="h1">Clinical Focus Quizzes</b><span id="h2"></span><span class="r"><span id="tm"></span><button class="bt g" id="mk" hidden>Mark</button><button class="bt g" id="hm" hidden>All quizzes</button><span id="usr" hidden><img id="av" alt="" referrerpolicy="no-referrer"><span id="un"></span><button class="bt g" id="so">Sign out</button></span></span></div>
 <div id="login"><div class="card"><h2 style="margin-top:0">Clinical Focus Quizzes</h2><p>Sign in to continue.</p><p><button class="bt" id="lg" hidden>Sign in with Google</button></p>
-<div id="ef" hidden><p style="margin:10px 0 8px;color:#5a6b7c;font-size:14px">or use your email</p><input type="email" id="ei" placeholder="Email" autocomplete="email"><input type="password" id="pw" placeholder="Password" autocomplete="current-password"><p style="margin:0 0 10px"><button class="bt" id="si">Sign in</button> <button class="bt g" id="su">Create account</button></p><p style="margin:0 0 10px"><a href="#" id="fp">Forgot password?</a> &middot; <a href="#" id="ml">Email me a sign-in link</a></p></div><p><button class="bt g" id="sk" hidden style="color:#16365c;border-color:#9aa7b4">Continue without signing in</button></p><p id="lm"></p></div></div>
+<div id="ef" hidden><p id="eh" style="margin:10px 0 8px;color:#5a6b7c;font-size:14px">or sign in with your email</p><input type="email" id="ei" placeholder="Email" autocomplete="email"><input type="password" id="pw" placeholder="Password" autocomplete="current-password"><p style="margin:0 0 10px"><button class="bt" id="si" style="width:100%">Sign in</button></p><p style="margin:0 0 10px"><a href="#" id="sw">New here? Create an account</a></p><p id="xl" style="margin:0 0 10px"><a href="#" id="fp">Forgot password?</a> &middot; <a href="#" id="ml">Email me a sign-in link</a></p></div><p><button class="bt g" id="sk" hidden style="color:#16365c;border-color:#9aa7b4">Continue without signing in</button></p><p id="lm"></p></div></div>
 <div class="wrap" id="app"></div>
 <div class="ft" id="ft"></div>
 <script>
@@ -625,14 +625,16 @@ if(firebaseConfig.apiKey.startsWith('YOUR_')){
  const val=()=>[g('ei').value.trim(),g('pw').value];
  const ERR={'auth/invalid-credential':'Wrong email or password.','auth/invalid-email':'That email address is not valid.','auth/missing-password':'Enter your password.','auth/email-already-in-use':'An account with this email already exists. Try Sign in, or Forgot password.','auth/weak-password':'Password must be at least 6 characters.','auth/too-many-requests':'Too many attempts. Please wait a few minutes.','auth/unauthorized-continue-uri':'This website address is not in Firebase "Authorized domains".','auth/missing-email':'Enter your email first.'};
  const fail=e=>msg(ERR[e.code]||'Something went wrong ('+(e.code||e.message)+').');
- g('si').onclick=async()=>{msg('');const[e,p]=val();try{await signInWithEmailAndPassword(auth,e,p)}catch(x){fail(x)}};
- g('su').onclick=async()=>{msg('');const[e,p]=val();try{await createUserWithEmailAndPassword(auth,e,p)}catch(x){fail(x)}};
+ let mode='in';
+ const setMode=m=>{mode=m;const c=m==='up';g('eh').textContent=c?'Create an account with your email':'or sign in with your email';g('si').textContent=c?'Create account':'Sign in';g('sw').textContent=c?'Already have an account? Sign in':'New here? Create an account';g('xl').hidden=c;g('pw').placeholder=c?'Password (at least 6 characters)':'Password';g('pw').autocomplete=c?'new-password':'current-password';msg('')};
+ g('sw').onclick=ev=>{ev.preventDefault();setMode(mode==='in'?'up':'in')};
+ g('si').onclick=async()=>{msg('');const[e,p]=val();if(!e)return msg('Type your email address first.');if(!p)return msg('Type your password.');try{if(mode==='up')await createUserWithEmailAndPassword(auth,e,p);else await signInWithEmailAndPassword(auth,e,p)}catch(x){fail(x)}};
  g('fp').onclick=async ev=>{ev.preventDefault();msg('');const[e]=val();if(!e)return msg('Enter your email first.');try{await sendPasswordResetEmail(auth,e)}catch(x){if(x.code!=='auth/user-not-found')return fail(x)}msg('If an account exists for that email, a reset link has been sent (check spam).',true)};
  g('ml').onclick=async ev=>{ev.preventDefault();msg('');const[e]=val();if(!e)return msg('Enter your email first.');try{await sendSignInLinkToEmail(auth,e,{url:location.origin+location.pathname,handleCodeInApp:true});try{localStorage.setItem('rxq_email',e)}catch(_){}msg('Sign-in link sent to '+e+'. Open it on this device (check spam).',true)}catch(x){fail(x)}};
  g('pw').onkeydown=ev=>{if(ev.key==='Enter')g('si').click()};
  const okEmail=u=>!ALLOWED_EMAILS.length||ALLOWED_EMAILS.map(x=>x.toLowerCase()).includes((u.email||'').toLowerCase());
  onAuthStateChanged(auth,async u=>{
-  if(u&&!u.emailVerified){await sendEmailVerification(u).catch(()=>{});msg('Please verify your email: we sent a link to '+u.email+' (check spam). Then sign in again.',true);await signOut(auth);return}
+  if(u&&!u.emailVerified){await sendEmailVerification(u).catch(()=>{});setMode('in');msg('Verify your email first: we sent a link to '+u.email+' (check spam). Open it, then come back here and sign in.',true);await signOut(auth);return}
   if(u&&okEmail(u)){
    g('un').textContent=u.displayName||u.email||'';g('av').src=u.photoURL||'';g('av').hidden=!u.photoURL;g('usr').hidden=false;enter();
   }else{
