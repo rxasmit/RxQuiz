@@ -43,6 +43,19 @@ button:focus-visible{outline:2px solid #d4a000}
 #ef{display:grid;gap:12px}#ef[hidden]{display:none}#ef p{margin:0}.oc{text-align:center;color:#5a6b7c;font-size:14px}
 #ef input{width:100%;min-height:42px;font:inherit;padding:9px 12px;border:1px solid #c9d6e4;border-radius:8px;background:#fff}#ef input:focus{outline:2px solid #24508a}
 #ef a{color:#16365c;font-size:14px}#lm{min-height:22px;margin:0;font-size:.9rem;line-height:1.4;color:#a02218}#lm.ok{color:#1e6b3f}
+@media(max-width:640px){
+html,body{max-width:100%;overflow-x:hidden}
+.hd{flex-wrap:wrap;padding:8px 10px;gap:6px 10px;font-size:13px}
+.hd b{flex:1 1 auto;min-width:0;font-size:14px}
+#h2{flex:none;white-space:nowrap}
+.hd .r{flex:1 1 100%;flex-wrap:wrap;gap:6px;justify-content:flex-start}
+.hd .r .bt,.ft .bt{padding:5px 10px;font-size:14px}
+#usr{margin-left:auto}
+.ft{padding:8px 10px}
+.wrap,.main{min-width:0}.main{max-width:100%}
+.q{font-size:17px}.c{padding:9px 10px}
+.card{margin:10px;padding:14px}
+}
 </style></head><body>
 <div class="hd"><b id="h1">RxQuizz</b><span id="h2"></span><span class="r"><span id="tm"></span><button class="bt g" id="mk" hidden>Mark</button><button class="bt g" id="hm" hidden>All quizzes</button><span id="usr" hidden><img id="av" alt="" referrerpolicy="no-referrer"><span id="un"></span><button class="bt g" id="so">Sign out</button></span></span></div>
 <div id="login"><div class="ac">
